@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Detalles de Película</title>
+  <link rel="stylesheet" href="estilo.css">
+  <style>
+    body {
+      background-color: #141414;
+      color: white;
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+    .detalle {
+      max-width: 90%; /* Ajustado a un porcentaje para pantallas pequeñas */
+      margin: 40px auto;
+      background-color: #222;
+      padding: 20px;
+      border-radius: 10px;
+      position: relative;
+    }
+    .boton-back {
+      display: inline-block;
+      margin-bottom: 20px;
+      background: #555;
+      color: white;
+      text-decoration: none;
+      padding: 8px 12px;
+      border-radius: 5px;
+      transition: background 0.2s;
+    }
+    .boton-back:hover {
+      background: #777;
+    }
+    iframe {
+      width: 100%;
+      height: 50vh; /* Ajuste en el tamaño del iframe para pantallas pequeñas */
+      border: none;
+      border-radius: 10px;
+      margin-bottom: 20px;
+    }
+    .image-container {
+      width: 100%;
+      max-height: 300px;
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+    }
+    .detalle img {
+      width: 100%;
+      max-height: 300px;
+      object-fit: contain;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5); /* Sombra añadida */
+    }
+    .detalle h2 {
+      text-align: center;
+      margin: 10px 0;
+      font-size: 1.5em; /* Tamaño de fuente ajustado */
+    }
+    .info {
+      text-align: center;
+      margin-bottom: 15px;
+      color: #aaa;
+      font-size: 14px;
+    }
+    .detalle p {
+      text-align: justify;
+      margin-bottom: 20px;
+      line-height: 1.6;
+    }
+    .boton-terabox {
+      display: block;
+      text-align: center;
+      padding: 12px;
+      background-color: #ff0404;
+      color: rgb(1, 1, 1);
+      border: none;
+      border-radius: 8px;
+      font-size: 18px;
+      text-decoration: none;
+      margin-top: 20px;
+      transition: background 0.3s;
+    }
+    .boton-terabox:hover {
+      background-color: #fb0c0c;
+    }
+    .error-trailer {
+      text-align: center;
+      color: #ff5555;
+      margin-bottom: 20px;
+      font-size: 16px;
+    }
+  </style>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+  <div class="detalle" id="detalle">
+    <a href="index.html" class="boton-back"><i class="fas fa-arrow-left"></i> Volver al catálogo</a>
+    <h2>Cargando película...</h2>
+  </div>
+
+  <script>
+    function getEmbedUrl(url) {
+      if (!url || typeof url !== 'string' || !url.trim()) {
+        return null;
+      }
+      // Si es YouTube, genera el embed
+      if (url.includes("youtube.com/watch")) {
+        const videoId = url.split("v=")[1]?.split("&")[0];
+        if (!videoId) return null;
+        return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1`;
+      } else if (url.includes("youtu.be/")) {
+        const videoId = url.split("youtu.be/")[1]?.split("?")[0];
+        if (!videoId) return null;
+        return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1`;
+      } else if (url.includes("/embed/")) {
+        // Si ya es un enlace embed, úsalo directamente
+        return url;
+      }
+      return null;
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get("id");
+
+    fetch("https://raw.githubusercontent.com/Staillim/Mybase/main/base2.json")
+      .then(res => {
+        if (!res.ok) throw new Error(`Error HTTP: ${res.status}`);
+        return res.json();
+      })
+      .then(data => {
+        const pelicula = data.find(p => p.ID == id);
+        const cont = document.getElementById("detalle");
+        if (!pelicula) {
+          cont.innerHTML = `
+            <a href="index.html" class="boton-back">← Volver al catálogo</a>
+            <h2>Película no encontrada</h2>
+          `;
+          return;
+        }
+
+        const embedUrl = getEmbedUrl(pelicula.TRAILER);
+        const backgroundStyle = pelicula.FONDO ? `style="background-image: url('${pelicula.FONDO}');"` : '';
+        const trailerHtml = embedUrl
+          ? `<iframe src="${embedUrl}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`
+          : `<p class="error-trailer">Tráiler no disponible</p>`;
+
+        cont.innerHTML = `
+          <a href="index.html" class="boton-back">← Volver al catálogo</a>
+          <div id="player-container">
+            ${trailerHtml}
+          </div>
+          <div style="display: flex; gap: 10px; justify-content: center; margin-bottom: 20px;">
+            <button id="btn-trailer" class="boton-terabox">Ver Tráiler</button>
+            <button id="btn-link" class="boton-terabox">Ver Pelicula</button>
+          </div>
+          <div class="image-container" ${backgroundStyle}>
+            <img src="${pelicula.IMG}" alt="${pelicula.NOMBRE}">
+          </div>
+          <h2>${pelicula.NOMBRE}</h2>
+          <div class="info">
+            Año: ${pelicula.AÑO} | Duración: ${pelicula.DURACION}
+          </div>
+          <p>${pelicula.DESCRIPCION}</p>
+        `;
+        // Script para alternar el reproductor
+        document.getElementById('btn-trailer').onclick = function() {
+          document.getElementById('player-container').innerHTML = trailerHtml;
+        };
+        document.getElementById('btn-link').onclick = function() {
+          document.getElementById('player-container').innerHTML = pelicula.LINK ? `<iframe src="${pelicula.LINK}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>` : `<p class='error-trailer'>Link no disponible</p>`;
+        };
+      })
+      .catch(err => {
+        document.getElementById("detalle").innerHTML = `
+          <a href="index.html" class="boton-back">← Volver al catálogo</a>
+          <h2>Error cargando datos</h2>
+        `;
+        console.error('Error cargando datos:', err);
+      });
+  </script>
+
+  <!-- Desactivar clic derecho y algunas teclas -->
+  <script>
+    document.addEventListener("contextmenu", e => e.preventDefault());
+    document.addEventListener("keydown", e => {
+      if (e.key === "F12" || (e.ctrlKey && e.shiftKey && e.key === "I")) {
+        e.preventDefault();
+      }
+    });
+  </script>
+</body>
+</html>
