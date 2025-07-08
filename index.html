@@ -328,8 +328,8 @@
       <div class="hamburger-menu">
         <button id="hamburger-toggle" aria-label="Abrir menú de categorías"><i class="fas fa-bars"></i></button>
       </div>
-      <h1><a href="index.html" style="color: inherit; text-decoration: none;">Play Movie MaX</a></h1>
-      <div id="categories-menu"></div>
+      <h1><a href="index.html" style="color: inherit; text-decoration: none;"></a></h1>
+      <div id="categories-menu" class="categories-menu"></div>
     </div>
     <div class="search-container">
       <label for="search-bar" class="sr-only">Buscar película por nombre</label>
@@ -415,10 +415,7 @@
   <!-- Sección Resultados de Categorías -->
   <section id="category-results" class="movies-grid"></section>
 
-  <!-- Footer -->
-  <footer>
-    <p>© 2025 Catálogo. Por 🍀.</p>
-  </footer>
+
 
   <script>
     let todasLasPeliculas = [];
@@ -712,35 +709,43 @@
 
     // Renderizar botones de categorías
     function renderCategories(movies) {
-      const cont = document.getElementById('categories-menu');
-      const setG = new Set();
+      const categoriesMenu = document.getElementById('categories-menu');
+      categoriesMenu.innerHTML = '';
+      const categoriasSet = new Set();
       movies.forEach(p => {
-        if (p && p.GENERO && typeof p.GENERO === 'string') {
-          p.GENERO.split('/').map(g => g.trim()).forEach(g => setG.add(g));
+        if (Array.isArray(p.GENERO_NORMALIZED)) {
+          p.GENERO_NORMALIZED.forEach(g => categoriasSet.add(g));
         }
       });
-      cont.innerHTML = `<button class="category-button" data-genero="">Todas</button>`;
-      Array.from(setG).sort().forEach(g => {
-        cont.innerHTML += `<button class="category-button" data-genero="${normalizeString(g)}">${g}</button>`;
-      });
-      cont.querySelectorAll('button').forEach(btn => {
-        btn.addEventListener('click', () => {
-          console.log('Categoría seleccionada:', btn.dataset.genero);
-          if (generoSeleccionado === btn.dataset.genero) {
-            generoSeleccionado = null; // Desactivar filtro
-            cont.querySelectorAll('button').forEach(b => b.classList.remove('active'));
-          } else {
-            generoSeleccionado = btn.dataset.genero;
-            cont.querySelectorAll('button').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-          }
-          textoBusqueda = '';
-          document.getElementById('search-bar').value = '';
-          cont.classList.remove('active'); // Cerrar menú al seleccionar
-          aplicarFiltros();
-        });
+      const categorias = Array.from(categoriasSet).sort();
+      // Botón "Todo"
+      const btnTodo = document.createElement('button');
+      btnTodo.className = 'category-button';
+      btnTodo.textContent = 'Todo';
+      btnTodo.onclick = () => {
+        document.getElementById('category-results').style.display = 'grid';
+        renderMovies(movies, document.getElementById('category-results'));
+      };
+      categoriesMenu.appendChild(btnTodo);
+      // Botones de categorías
+      categorias.forEach(cat => {
+        const btn = document.createElement('button');
+        btn.className = 'category-button';
+        btn.textContent = cat.charAt(0).toUpperCase() + cat.slice(1);
+        btn.onclick = () => {
+          const filtradas = movies.filter(p => p.GENERO_NORMALIZED.includes(cat));
+          document.getElementById('category-results').style.display = 'grid';
+          renderMovies(filtradas, document.getElementById('category-results'));
+        };
+        categoriesMenu.appendChild(btn);
       });
     }
+    // Menú hamburguesa toggle
+    const hamburgerToggle = document.getElementById('hamburger-toggle');
+    const categoriesMenu = document.getElementById('categories-menu');
+    hamburgerToggle.addEventListener('click', () => {
+      categoriesMenu.classList.toggle('active');
+    });
 
     // Aplicar filtros
     function aplicarFiltros() {
@@ -884,3 +889,5 @@ containers.forEach(container => {
   });
 });
 </script>
+<head>
+</head>
